@@ -5,15 +5,14 @@ RUN apk add --no-cache gcc musl-dev sqlite-dev build-base
 
 WORKDIR /app
 
-# 1. Copy BOTH go.mod and go.sum (if it exists) to leverage Docker caching
-COPY go.mod go.sum* ./
+# Copy ONLY the dependency manifest file
+COPY go.mod ./
 
-# 2. Copy the source code BEFORE running go mod tidy
-# This allows go mod tidy to see what packages main.go actually uses
-COPY main.go ./
-
-# 3. Download and tidy dependencies with the source code present
+# Force Go to download dependencies and generate its own fresh, valid checksum definitions
 RUN go mod download && go mod tidy
+
+# Copy the application source code file
+COPY main.go ./
 
 # Compile with CGO enabled
 ENV CGO_ENABLED=1
