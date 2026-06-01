@@ -100,7 +100,7 @@ docker build -t python-service:latest ./python-service
 docker build -t node-service:latest   ./node-service
 ```
 
-![Docker Builds](./screenshots/02-docker-builds.png)
+![Docker Builds](./screenshots/02-docker-builds-go.png)
 *All three service images built successfully inside Minikube's Docker daemon*
 
 **3. Apply all Kubernetes manifests**
