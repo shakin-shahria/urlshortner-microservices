@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-service
+  namespace: default
+spec:
+  replicas: 2 # High Availability baseline
+  selector:
+    matchLabels:
+      app: go-service
+  template:
+    metadata:
+      labels:
+        app: go-service
+    spec:
+      containers:
+      - name: go-api
+        image: shakinshahria/urlshortener-go:latest # <-- CHANGE TO YOUR DOCKERHUB USERNAME
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+        envFrom:
+        - configMapRef:
+            name: app-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-service
+  namespace: default
+spec:
+  type: ClusterIP # Internal cluster communication
+  ports:
+  - port: 8000
+    targetPort: 8000
+  selector:
+    app: go-service
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: go-service-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: go-service
+  minReplicas: 2
+  maxReplicas: 10 # Scale aggressively during 12:00 PM rush
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50 # Scale up if CPU exceeds 50%

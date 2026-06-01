@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  rules:
+  - http:
+      paths:
+      # Direct paths starting with /api to the Go Service back-end engine
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: go-service
+            port:
+              number: 8000
+      # Route all other root traffic to the Node.js user dashboard
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: node-service
+            port:
+              number: 3000
