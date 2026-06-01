@@ -1,0 +1,55 @@
+name: CI/CD Build and Publish Pipeline
+
+on:
+  push:
+    branches: [ "main" ] # Triggers the pipeline every time you push to the main branch
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Step 1: Clone the source code down into the GitHub cloud worker machine
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    # Step 2: Log into your Docker Hub account securely using the secrets we saved
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets::DOCKER }}
+        password: ${{ secrets::DOCKERHUB_TOKEN }}
+
+    # Step 3: Set up Docker Buildx (enables advanced caching features)
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # --- BUILD & PUSH GO API SERVICE ---
+    - name: Build and Push Go Service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./go-service
+        push: true
+        tags: ${{ secrets::DOCKERHUB_USERNAME }}/urlshortener-go:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # --- BUILD & PUSH PYTHON ANALYTICS SERVICE ---
+    - name: Build and Push Python Service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./python-service
+        push: true
+        tags: ${{ secrets::DOCKERHUB_USERNAME }}/urlshortener-python:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # --- BUILD & PUSH NODE FRONTEND SERVICE ---
+    - name: Build and Push Node Service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./node-service
+        push: true
+        tags: ${{ secrets::DOCKERHUB_USERNAME }}/urlshortener-node:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
